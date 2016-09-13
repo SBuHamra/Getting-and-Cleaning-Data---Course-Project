@@ -1,0 +1,207 @@
+---
+title: "Getting and Cleaning Data Course Project"
+author: "Sana BuHamra"
+date: "September 13, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+ 
+
+## Summary
+The purpose of this project is to demonstrate ability to collect, work with, and clean a data set. The goal is to prepare tidy data that can be used for later analysis. A tidy data is the end goal of the whole process that includes the following components:
+
+*	Each variable should be in one column
+*	Each different observation of the variable should be in a different row.
+*	There should be one table for each “kind” of variable
+*	Multiple tables should include and id link column.
+
+Some other important components of a tidy data would be to have a human readable variable names, variable name included as a top row of the data file, and data saved in one file per table.
+
+ 
+## The Data
+Companies like Fitbit, Nike, and Jawbone Up are racing to develop the most advanced algorithms to attract new users. The data linked to from the course website represent data collected from the accelerometers from the Samsung Galaxy S smartphone. A full description is available at the site where the data was obtained:
+http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones
+Here are the data for the project:
+https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip
+The experiments have been carried out with a group of 30 volunteers within an age bracket of 19-48 years. Each person performed six activities (WALKING, WALKING_UPSTAIRS, WALKING_DOWNSTAIRS, SITTING, STANDING, LAYING) wearing a smartphone (Samsung Galaxy S II) on the waist. Using its embedded accelerometer and gyroscope, we captured 3-axial linear acceleration and 3-axial angular velocity at a constant rate of 50Hz. The experiments have been video-recorded to label the data manually. The obtained dataset has been randomly partitioned into two sets, where 70% of the volunteers was selected for generating the training data and 30% the test data. Usually training data are used to build a model and on the other hand test data are used for verifying the model fit.
+
+The sensor signals (accelerometer and gyroscope) were pre-processed by applying noise filters and then sampled in fixed-width sliding windows. From each window, a vector of features was obtained by calculating variables from the time and frequency domain.
+
+
+##### ‘UCI HAR Dataset’ 
+The data folder contains different subfolders and files of which that are required to complete this assignment are:
+
+* 1-The subject identification files in  'train/subject_train.txt' & ' test/subject_test.txt' 
+* 2-The measurement data in 'train/x_train.txt' & 'test/X_test.txt'   
+* 3-The activity type files in  'train/y_train.txt' & 'test/y_test.txt' 
+* 4-The variable names of the  col variables (X data in 2 above) available in 'features.txt' 
+* 5-The activity labels available in 'activity_labels.txt' that links the class labels with their activity name 
+For more information on the data description and units of measurements please refer to the features_info.txt provided on the course site or https://www.dropbox.com/s/2bqdixlu1hjxdu2/features_info.txt?dl=0
+
+#### Submission Requiements: 
+Student have to create one R script called run_analysis.R that does the following:
+
+* 1-	Merges the training and the test sets to create one data set.
+* 2-	Extracts only the measurements on the mean and standard deviation for each measurement.
+* 3-	Uses descriptive activity names to name the activities in the data set.
+* 4-	Appropriately labels the data set with descriptive variable names.
+* 5-	From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+
+files to be submitted: 1) a tidy data set as described above, 2) a link to a Github repository with script for performing the analysis, and 3) a code book that describes the variables, the data, and any transformations or work that performed to clean up the data called CodeBook.md.
+
+
+
+## Data Processing
+
+##### Downloading and unzipping dataset
+```
+if(!file.exists("./Mydata")){dir.create("./Mydata")}
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+download.file(fileUrl,destfile="./Mydata/Dataset.zip")
+```
+##### Unzip dataSet to /Mydata directory
+```
+unzip(zipfile="./Mydata/Dataset.zip",exdir="./Mydata")
+```
+
+
+=======================================================================
+
+### Part 1. Merge the training and the test sets to create one data set:
+
+#### 1.1  Reading  raw data files
+
+* Reading training X data containg the measurements, training Y data (Activity Id), and corresponding subject ID's  
+
+```
+x_train <- read.table("./Mydata/UCI HAR Dataset/train/X_train.txt")
+y_train <- read.table("./Mydata/UCI HAR Dataset/train/y_train.txt")
+subject_train <- read.table("./Mydata/UCI HAR Dataset/train/subject_train.txt")
+dim(x_train); dim(y_train); dim(subject_train)
+```
+
+* Reading testing X data containg the measurements, testing Y data (Activity Id), and corresponding subject ID's
+
+```
+x_test <- read.table("./Mydata/UCI HAR Dataset/test/X_test.txt")
+y_test <- read.table("./Mydata/UCI HAR Dataset/test/y_test.txt")
+subject_test <- read.table("./Mydata/UCI HAR Dataset/test/subject_test.txt")
+dim(y_test); dim(y_test); dim(subject_test)
+```
+
+* Reading activity labels:
+
+```
+activity_labels <- read.table('./Mydata/UCI HAR Dataset/activity_labels.txt')
+```
+
+* Reading feature vector:
+
+```
+features <- read.table('./Mydata/UCI HAR Dataset/features.txt')
+```
+
+
+#### 1.2  Merging the data sets
+
+To merge the above data sets, we may either combine row wise each part of training and testing data sets (i.e x_train
+and x_test, y_train & y_test, subject_train & subject_test) and then stack three sets of col variable using cbind command
+Or combine colum wise all col variables corresponding training data, repeat for testing data and then combine using the rbind.
+
+ 
+```
+X_merged <- rbind(x_train, x_test)
+Y_merged <- rbind(y_train, y_test)
+subject_merged <- rbind(subject_train, subject_test)
+dim(X_merged); dim(Y_merged); dim(subject_merged)
+```
+
+#### 1.3 Defining variable names
+prior to extracting measurements on the mean and std, we need to define the names of the variables
+ 
+```
+colnames(X_merged) <- features[,2] 
+colnames(activity_labels) <- c("Activity","Type_of_Activity")
+```
+
+
+#### 1.4 Merging the training and testing sets in one data set
+
+```
+AllData <- cbind(subject_merged, Y_merged, X_merged )
+dim(AllData)
+``` 
+
+=======================================================================
+
+### Part 2. Extract  only the measurements on the mean and standard deviation for each measurement.
+To do so first define a new char variable containing all variable names. Then use the Pattern Matching and Replacement functions
+such as grep or gep1 to extract those variable names corresponding to the means or stds (i.e. mean() and std(). 
+
+```
+Var_Names <- colnames(X_merged)
+mu_sigma  <- (grep("-(mean|std)\\(\\)", Var_Names) ) 
+MuSigma_Data  <- X_merged[ , mu_sigma]  # subsetting using the  variable mu_sigma with entries col's of mean & std only
+dim(MuSigma_Data)
+str(MuSigma_Data)
+```
+=======================================================================
+
+### Part 3. Use descriptive activity names to name the activities in the data set. 
+
+```
+Y_merged[, 1] <-  activity_labels[Y_merged[, 1], 2]
+names(Y_merged) <- "Activity"
+View(Y_merged)   
+```
+=======================================================================
+
+### Part 4. Appropriately label the data set with descriptive activity names.
+
+```
+colnames(subject_merged) <- "Subject" 
+summary(subject_merged)
+```
+The variables  'subject' and 'activity' has been renamed appropiately in the above parts, next we will rename the 'feature' variables using better descriptive names as follows:
+
+*  'f',  is replaced by frequency
+*  't' is replaced by time
+* 'BodyBody' is replaced by Body
+* 'Acc' is replaced by Accelerometer
+* 'Gyro' is replaced by Gyroscope
+* 'Jerk'  is replaced by "SuddenMovement"
+* 'Mag' is replaced by Magnitude
+
+```
+names(MuSigma_Data) <- gsub("^f", "frequency", names(MuSigma_Data))
+names(MuSigma_Data) <- gsub("^t", "time", names(MuSigma_Data))
+names(MuSigma_Data) <- gsub("BodyBody", "Body", names(MuSigma_Data))
+names(MuSigma_Data) <- gsub("Acc", "Accelerometer", names(MuSigma_Data))
+names(MuSigma_Data) <- gsub("Gyro", "Gyroscope", names(MuSigma_Data))
+names(MuSigma_Data) <- gsub("Jerk", "SuddenMovement", names(MuSigma_Data))
+names(MuSigma_Data) <- gsub("Mag", "Magnitude", names(MuSigma_Data))
+```
+
+####   combining Musigma_Data with 'subject' and 'activity' variables to obtain one pre-final data set.   
+
+```
+MuSigma_AllData <- cbind(subject_merged, Y_merged, MuSigma_Data)
+View(MuSigma_AllData)
+str(MuSigma_AllData)
+```
+=======================================================================
+
+### Part 5. Create a Tidy Data Set.
+
+Finally, creating a second, independent tidy data set based on on the data set (MuSigma_AllData) in Part 4 with the average of each variable for each activity and each subject.
+
+```
+library(plyr);
+MyTidyData<-aggregate(. ~Subject + Activity, MuSigma_AllData, mean)
+MyTidyData<-MyTidyData[order(MyTidyData$Subject,MyTidyData$Activity),]
+write.table(MyTidyData, file = "MyTidyData.txt",row.name=FALSE)
+```
